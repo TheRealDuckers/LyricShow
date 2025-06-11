@@ -159,9 +159,9 @@
 
       // Sample default lyrics if no LRC file is loaded.
       const defaultLyrics = [
-        { time: 0, text: "Welcome to the song" },
-        { time: 5, text: "This is the first lyric" },
-        { time: 10, text: "Enjoy the tune!" }
+        { time: 0, text: "Welcome to LyricShow" },
+        { time: 2, text: "To start, upload a .lrc (lyric) file at the top of the page" },
+        { time: 8, text: "Created by Duckers" }
       ];
 
       // Use default lyrics if no LRC file is loaded.
@@ -358,14 +358,8 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch(error => console.error("Error loading LRC file:", error));
   }
 });
-document.addEventListener("DOMContentLoaded", function() {
-    setTimeout(() => {
-        document.getElementById("loader").style.display = "none";
-        document.getElementById("content").classList.remove("hidden");
-    }, 2000); // Simulating loading time
-});
 
-
+displayLyrics()
   </script>
 </body>
 </html>
