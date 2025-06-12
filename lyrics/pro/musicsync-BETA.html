@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LyricShow - BETA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: black;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      position: relative;
+    }
+    
+    .lyrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 40vh;
+      overflow: hidden;
+      border: 0px solid #ddd;
+      border-radius: 0px;
+      background-color: black;
+      
+    }
+    
+    #lyricsInner {
+      position: relative;
+      transition: transform 0.4s ease-in-out;
+    }
+    
+    .lyric {
+      font-size: 20px;
+      color: gray;
+      padding: 10px 0;
+      transition: all 0.4s ease-in-out;
+      text-align: center;
+      cursor: pointer;
+    }
+    
+    .lyric.active {
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      transform: scale(1.2);
+    }
+    
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    
+    button {
+      background: white;
+      border: none;
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    input[type="range"] {
+      width: 50%;
+      border-radius: 5px;
+    }
+
+    .loaders {
+      margin: 20px;
+      color: white;
+    }
+
+    .timer-display {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loaders">
+    <label for="mp3File">Load MP3:</label>
+    <input type="file" id="mp3File" accept="audio/mp3,.mp3">
+    
+    <label for="lrcFile">Load LRC:</label>
+    <input type="file" id="lrcFile" accept=".lrc">
+  </div>
+
+  <audio id="audio">
+    Your browser does not support audio. Note, this is a BETA version, so it may be us, not you!
+  </audio>
+
+  <div class="timer-display" id="timerDisplay">0:00</div>
+  
+  <div class="lyrics-container">
+    <div id="lyricsInner"></div>
+  </div>
+
+  <div class="controls">
+    <button id="play">▶️ Play</button>
+    <button id="pause">⏸️ Pause</button>
+    <input type="range" id="seekBar" value="0" step="0.1">
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const mp3Input = document.getElementById("mp3File");
+      const audio = document.getElementById("audio");
+      const playButton = document.getElementById("play");
+      const pauseButton = document.getElementById("pause");
+      const seekBar = document.getElementById("seekBar");
+      const lyricsContainer = document.getElementById("lyricsInner");
+      const lrcInput = document.getElementById("lrcFile");
+      const timerDisplay = document.getElementById("timerDisplay");
+
+      let lyricsData = [];
+
+      // Load MP3 file
+      mp3Input.addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+          const fileURL = URL.createObjectURL(file);
+          audio.src = fileURL;
+          audio.load();
+
+          audio.addEventListener("loadedmetadata", () => {
+            seekBar.max = audio.duration;
+            console.log("Audio metadata loaded. Duration:", audio.duration);
+          });
+        }
+      });
+
+      // Load LRC file
+      lrcInput.addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const lines = e.target.result.split("\n").filter(line => line.trim().length > 0);
+            lyricsData = lines.map(line => {
+              const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+              return match ? { 
+                time: parseInt(match[1], 10) * 60 + parseFloat(match[2]),
+                text: match[3].trim()
+              } : null;
+            }).filter(Boolean);
+            displayLyrics();
+          };
+          reader.readAsText(file);
+        }
+      });
+
+      function displayLyrics() {
+        lyricsContainer.innerHTML = "";
+        lyricsData.forEach((lyric, index) => {
+          const div = document.createElement("div");
+          div.classList.add("lyric");
+          div.textContent = lyric.text;
+          div.addEventListener("click", () => {
+            audio.currentTime = lyric.time;
+          });
+          lyricsContainer.appendChild(div);
+        });
+      }
+
+      audio.addEventListener("timeupdate", () => {
+        seekBar.value = audio.currentTime;
+        updateLyrics(audio.currentTime);
+      });
+
+      function updateLyrics(currentTime) {
+        const lyricDivs = document.querySelectorAll(".lyric");
+        let activeIndex = -1;
+
+        for (let i = 0; i < lyricsData.length; i++) {
+          const lyric = lyricsData[i];
+          if (lyric && currentTime >= lyric.time && (!lyricsData[i + 1] || currentTime < lyricsData[i + 1].time)) {
+            activeIndex = i;
+            break;
+          }
+        }
+
+        lyricDivs.forEach((div, index) => {
+          if (index === activeIndex) {
+            div.classList.add("active");
+          } else {
+            div.classList.remove("active");
+          }
+        });
+
+        // Scroll active lyric to center
+        if (activeIndex !== -1 && lyricDivs[activeIndex]) {
+          const containerHeight = document.querySelector(".lyrics-container").clientHeight;
+          const activeCenter = lyricDivs[activeIndex].offsetTop + lyricDivs[activeIndex].offsetHeight / 2;
+          lyricsContainer.style.transform = `translateY(${containerHeight / 2 - activeCenter}px)`;
+        }
+      }
+
+      seekBar.addEventListener("input", () => {
+        audio.currentTime = seekBar.value;
+      });
+
+      playButton.addEventListener("click", () => audio.play());
+      pauseButton.addEventListener("click", () => audio.pause());
+    });
+  </script>
+</body>
+</html>
