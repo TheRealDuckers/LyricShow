@@ -133,8 +133,9 @@
           return;
         }
 
-        const lrcPath = `/songs/FNO/lyrics.lrc`;
-        const mp3Path = `/songs/FNO/track.mp3`;
+        const songFolder = params.get("song"); // Gets song name from URL
+        const lrcPath = `/songs/${songFolder}/lyrics.lrc`; // Builds full file path
+
 
         console.log("Loading from folder:", songFolder);
 
