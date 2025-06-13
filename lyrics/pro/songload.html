@@ -14,7 +14,7 @@
       height: 100vh;
       position: relative;
     }
-    
+
     .lyrics-container {
       position: absolute;
       top: 50%;
@@ -28,12 +28,12 @@
       background-color: #fff;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    
+
     #lyricsInner {
       position: relative;
       transition: transform 0.4s ease-in-out;
     }
-    
+
     .lyric {
       font-size: 20px;
       color: gray;
@@ -42,14 +42,14 @@
       text-align: center;
       cursor: pointer;
     }
-    
+
     .lyric.active {
       font-size: 36px;
       font-weight: bold;
       color: black;
       transform: scale(1.2);
     }
-    
+
     .controls {
       position: fixed;
       bottom: 0;
@@ -62,7 +62,7 @@
       justify-content: center;
       padding: 10px;
     }
-    
+
     button {
       background: white;
       border: none;
@@ -72,7 +72,7 @@
       border-radius: 5px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    
+
     input[type="range"] {
       width: 50%;
       border-radius: 5px;
@@ -102,7 +102,7 @@
   </audio>
 
   <div class="timer-display" id="timerDisplay">0:00</div>
-  
+
   <div class="lyrics-container">
     <div id="lyricsInner"></div>
   </div>
@@ -133,11 +133,11 @@
           return;
         }
 
-        const songFolder = params.get("song"); // Gets song name from URL
-        const lrcPath = `/songs/${songFolder}/lyrics.lrc`; // Builds full file path
+        const baseURL = "https://therealduckers.github.io/LyricShow/pro/songs";
+        const lrcPath = `${baseURL}${songFolder}/lyrics.lrc`;
+        const mp3Path = `${baseURL}${songFolder}/track.mp3`;
 
-
-        console.log("Loading from folder:", songFolder);
+        console.log("Fetching:", lrcPath, mp3Path);
 
         // Load MP3 file
         audio.src = mp3Path;
@@ -207,12 +207,6 @@
             div.classList.remove("active");
           }
         });
-
-        if (activeIndex !== -1 && lyricDivs[activeIndex]) {
-          const containerHeight = document.querySelector(".lyrics-container").clientHeight;
-          const activeCenter = lyricDivs[activeIndex].offsetTop + lyricDivs[activeIndex].offsetHeight / 2;
-          lyricsContainer.style.transform = `translateY(${containerHeight / 2 - activeCenter}px)`;
-        }
       }
 
       seekBar.addEventListener("input", () => {
