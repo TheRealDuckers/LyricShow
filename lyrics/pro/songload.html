@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyrics Sync with MP3 Playback</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      position: relative;
+    }
+    
+    .lyrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 40vh;
+      overflow: hidden;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    #lyricsInner {
+      position: relative;
+      transition: transform 0.4s ease-in-out;
+    }
+    
+    .lyric {
+      font-size: 20px;
+      color: gray;
+      padding: 10px 0;
+      transition: all 0.4s ease-in-out;
+      text-align: center;
+      cursor: pointer;
+    }
+    
+    .lyric.active {
+      font-size: 36px;
+      font-weight: bold;
+      color: black;
+      transform: scale(1.2);
+    }
+    
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    
+    button {
+      background: white;
+      border: none;
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    input[type="range"] {
+      width: 50%;
+      border-radius: 5px;
+    }
+
+    .loaders {
+      margin: 20px;
+    }
+
+    .timer-display {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loaders">
+    <label for="songName">Enter Song Name:</label>
+    <input type="text" id="songName" placeholder="song1">
+    <button id="loadSong">Load Song</button>
+  </div>
+
+  <audio id="audio">
+    Your browser does not support audio.
+  </audio>
+
+  <div class="timer-display" id="timerDisplay">0:00</div>
+  
+  <div class="lyrics-container">
+    <div id="lyricsInner"></div>
+  </div>
+
+  <div class="controls">
+    <button id="play">▶️ Play</button>
+    <button id="pause">⏸️ Pause</button>
+    <input type="range" id="seekBar" value="0" step="0.1">
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const songInput = document.getElementById("songName");
+      const loadButton = document.getElementById("loadSong");
+      const audio = document.getElementById("audio");
+      const playButton = document.getElementById("play");
+      const pauseButton = document.getElementById("pause");
+      const seekBar = document.getElementById("seekBar");
+      const lyricsContainer = document.getElementById("lyricsInner");
+      const timerDisplay = document.getElementById("timerDisplay");
+
+      let lyricsData = [];
+
+      loadButton.addEventListener("click", function () {
+        const songFolder = songInput.value.trim();
+        if (!songFolder) {
+          console.error("No song name entered.");
+          return;
+        }
+
+        const lrcPath = `/songs/${songFolder}/lyrics.lrc`;
+        const mp3Path = `/songs/${songFolder}/track.mp3`;
+
+        console.log("Loading from folder:", songFolder);
+
+        // Load MP3 file
+        audio.src = mp3Path;
+        audio.load();
+
+        audio.addEventListener("loadedmetadata", () => {
+          seekBar.max = audio.duration;
+          console.log("Audio metadata loaded. Duration:", audio.duration);
+        });
+
+        // Fetch LRC file
+        fetch(lrcPath)
+          .then(response => response.ok ? response.text() : Promise.reject("LRC not found"))
+          .then(lrcContent => {
+            console.log("LRC file loaded:", lrcContent);
+            parseLyrics(lrcContent);
+          })
+          .catch(error => console.error("Error loading LRC:", error));
+      });
+
+      function parseLyrics(lrcContent) {
+        const lines = lrcContent.split("\n").filter(line => line.trim().length > 0);
+        lyricsData = lines.map(line => {
+          const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+          return match ? { 
+            time: parseInt(match[1], 10) * 60 + parseFloat(match[2]),
+            text: match[3].trim()
+          } : null;
+        }).filter(Boolean);
+        displayLyrics();
+      }
+
+      function displayLyrics() {
+        lyricsContainer.innerHTML = "";
+        lyricsData.forEach((lyric, index) => {
+          const div = document.createElement("div");
+          div.classList.add("lyric");
+          div.textContent = lyric.text;
+          div.addEventListener("click", () => {
+            audio.currentTime = lyric.time;
+          });
+          lyricsContainer.appendChild(div);
+        });
+      }
+
+      audio.addEventListener("timeupdate", () => {
+        seekBar.value = audio.currentTime;
+        updateLyrics(audio.currentTime);
+      });
+
+      function updateLyrics(currentTime) {
+        const lyricDivs = document.querySelectorAll(".lyric");
+        let activeIndex = -1;
+
+        for (let i = 0; i < lyricsData.length; i++) {
+          const lyric = lyricsData[i];
+          if (lyric && currentTime >= lyric.time && (!lyricsData[i + 1] || currentTime < lyricsData[i + 1].time)) {
+            activeIndex = i;
+            break;
+          }
+        }
+
+        lyricDivs.forEach((div, index) => {
+          if (index === activeIndex) {
+            div.classList.add("active");
+          } else {
+            div.classList.remove("active");
+          }
+        });
+
+        if (activeIndex !== -1 && lyricDivs[activeIndex]) {
+          const containerHeight = document.querySelector(".lyrics-container").clientHeight;
+          const activeCenter = lyricDivs[activeIndex].offsetTop + lyricDivs[activeIndex].offsetHeight / 2;
+          lyricsContainer.style.transform = `translateY(${containerHeight / 2 - activeCenter}px)`;
+        }
+      }
+
+      seekBar.addEventListener("input", () => {
+        audio.currentTime = seekBar.value;
+      });
+
+      playButton.addEventListener("click", () => audio.play());
+      pauseButton.addEventListener("click", () => audio.pause());
+    });
+  </script>
+</body>
+</html>
