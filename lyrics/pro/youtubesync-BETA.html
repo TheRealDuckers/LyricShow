@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LyricShow - YouTube Track Load Mode</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: black;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      position: relative;
+    }
+
+    .lyrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 99%;
+      height: 80vh;
+      overflow: hidden;
+      background-color: black;
+    }
+
+    #lyricsInner {
+      position: relative;
+      transition: transform 0.4s ease-in-out;
+    }
+
+    .lyric {
+      font-size: 20px;
+      color: gray;
+      padding: 10px 0;
+      transition: all 0.4s ease-in-out;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .lyric.active {
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      transform: scale(1.2);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    button {
+      background: white;
+      border: none;
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    input[type="range"] {
+      width: 50%;
+    }
+
+    .loaders {
+      margin: 20px;
+      color: white;
+    }
+
+    .timer-display {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="controlsContent">
+    <div class="loaders">
+      <label for="youtubeLink">YouTube Link:</label>
+      <input type="text" id="youtubeLink" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+      <label for="lrcFile">Load LRC:</label>
+      <input type="file" id="lrcFile" accept=".lrc">
+      <button id="loadVideo">Load Video</button>
+    </div>
+  </div>
+
+  <div id="player"></div>
+
+  <div class="timer-display" id="timerDisplay">0:00</div>
+
+  <div class="lyrics-container">
+    <div id="lyricsInner"></div>
+  </div>
+
+  <div class="controls">
+    <button id="play">▶️ Play</button>
+    <button id="pause">⏸️ Pause</button>
+    <input type="range" id="seekBar" value="0" step="0.1">
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    let ytPlayer, isYouTubeReady = false;
+    let lyricsData = [];
+
+    function extractVideoId(url) {
+      const regExp = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+      const match = url.match(regExp);
+      return match ? match[1] : null;
+    }
+
+    document.getElementById("loadVideo").addEventListener("click", () => {
+      const link = document.getElementById("youtubeLink").value.trim();
+      const videoId = extractVideoId(link);
+      if (!videoId) {
+        alert("Invalid YouTube link!");
+        return;
+      }
+
+      if (ytPlayer) ytPlayer.destroy();
+
+      ytPlayer = new YT.Player('player', {
+        height: '0',
+        width: '0',
+        videoId: videoId,
+        events: {
+          onReady: () => {
+            isYouTubeReady = true;
+            document.getElementById("play").onclick = () => ytPlayer.playVideo();
+            document.getElementById("pause").onclick = () => ytPlayer.pauseVideo();
+          }
+        }
+      });
+    });
+
+    document.getElementById("lrcFile").addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const lines = e.target.result.split("\n").filter(line => line.trim().length > 0);
+          lyricsData = lines.map(line => {
+            const match = line.match(/
+
+\[(\d{2}):(\d{2}(?:\.\d{2})?)\]
+
+(.*)/);
+            return match ? {
+              time: parseInt(match[1], 10) * 60 + parseFloat(match[2]),
+              text: match[3].trim()
+            } : null;
+          }).filter(Boolean);
+          displayLyrics();
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    function displayLyrics() {
+      const lyricsContainer = document.getElementById("lyricsInner");
+      lyricsContainer.innerHTML = "";
+      lyricsData.forEach((lyric, index) => {
+        const div = document.createElement("div");
+        div.classList.add("lyric");
+        div.textContent = lyric.text;
+        div.addEventListener("click", () => {
+          if (ytPlayer) ytPlayer.seekTo(lyric.time, true);
+        });
+        lyricsContainer.appendChild(div);
+      });
+    }
+
+    function updateLyrics(currentTime) {
+      const lyricDivs = document.querySelectorAll(".lyric");
+      let activeIndex = -1;
+
+      for (let i = 0; i < lyricsData.length; i++) {
+        const lyric = lyricsData[i];
+        if (lyric && currentTime >= lyric.time && (!lyricsData[i + 1] || currentTime < lyricsData[i + 1].time)) {
+          activeIndex = i;
+          break;
+        }
+      }
+
+      lyricDivs.forEach((div, index) => {
+        div.classList.toggle("active", index === activeIndex);
+      });
+
+      if (activeIndex !== -1 && lyricDivs[activeIndex]) {
+        const containerHeight = document.querySelector(".lyrics-container").clientHeight;
+        const activeCenter = lyricDivs[activeIndex].offsetTop + lyricDivs[activeIndex].offsetHeight / 2;
+        document.getElementById("lyricsInner").style.transform = `translateY(${containerHeight / 2 - activeCenter}px)`;
+      }
+    }
+
+    setInterval(() => {
+      if (isYouTubeReady && ytPlayer && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+        const currentTime = ytPlayer.getCurrentTime();
+        updateLyrics(currentTime);
+        document.getElementById("seekBar").value = currentTime;
+        document.getElementById("timerDisplay").textContent = `${Math.floor(currentTime / 60)}:${String(Math.floor(currentTime % 60)).padStart(2, '0')}`;
+      }
+    }, 100);
+
+    document.getElementById("seekBar").addEventListener("input", () => {
+      if (ytPlayer) ytPlayer.seekTo(parseFloat(seekBar.value), true);
+    });
+  </script>
+</body>
+</html>
