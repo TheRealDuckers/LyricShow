@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LyricShow - YouTube Track Load Mode</title>
+  <title>LyricShow - YouTube Mode</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -130,7 +130,7 @@
         return;
       }
 
-      if (ytPlayer) ytPlayer.destroy();
+      if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy();
 
       ytPlayer = new YT.Player('player', {
         height: '0',
@@ -139,8 +139,12 @@
         events: {
           onReady: () => {
             isYouTubeReady = true;
-            document.getElementById("play").onclick = () => ytPlayer.playVideo();
-            document.getElementById("pause").onclick = () => ytPlayer.pauseVideo();
+            document.getElementById("play").onclick = () => {
+              if (ytPlayer && typeof ytPlayer.playVideo === "function") ytPlayer.playVideo();
+            };
+            document.getElementById("pause").onclick = () => {
+              if (ytPlayer && typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
+            };
           }
         }
       });
@@ -153,7 +157,11 @@
         reader.onload = (e) => {
           const lines = e.target.result.split("\n").filter(line => line.trim().length > 0);
           lyricsData = lines.map(line => {
-            const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+            const match = line.match(/
+
+\[(\d{2}):(\d{2}(?:\.\d{2})?)\]
+
+(.*)/);
             return match ? {
               time: parseInt(match[1], 10) * 60 + parseFloat(match[2]),
               text: match[3].trim()
@@ -173,7 +181,9 @@
         div.classList.add("lyric");
         div.textContent = lyric.text;
         div.addEventListener("click", () => {
-          if (ytPlayer) ytPlayer.seekTo(lyric.time, true);
+          if (ytPlayer && typeof ytPlayer.seekTo === "function") {
+            ytPlayer.seekTo(lyric.time, true);
+          }
         });
         lyricsContainer.appendChild(div);
       });
@@ -203,16 +213,20 @@
     }
 
     setInterval(() => {
-      if (isYouTubeReady && ytPlayer && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+      if (isYouTubeReady && ytPlayer && typeof ytPlayer.getCurrentTime === "function" &&
+          ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
         const currentTime = ytPlayer.getCurrentTime();
         updateLyrics(currentTime);
         document.getElementById("seekBar").value = currentTime;
-        document.getElementById("timerDisplay").textContent = `${Math.floor(currentTime / 60)}:${String(Math.floor(currentTime % 60)).padStart(2, '0')}`;
+        document.getElementById("timerDisplay").textContent =
+          `${Math.floor(currentTime / 60)}:${String(Math.floor(currentTime % 60)).padStart(2, '0')}`;
       }
     }, 100);
 
     document.getElementById("seekBar").addEventListener("input", () => {
-      if (ytPlayer) ytPlayer.seekTo(parseFloat(seekBar.value), true);
+      if (ytPlayer && typeof ytPlayer.seekTo === "function") {
+        ytPlayer.seekTo(parseFloat(seekBar.value), true);
+      }
     });
   </script>
 </body>
