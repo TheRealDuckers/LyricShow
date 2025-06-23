@@ -157,11 +157,7 @@
         reader.onload = (e) => {
           const lines = e.target.result.split("\n").filter(line => line.trim().length > 0);
           lyricsData = lines.map(line => {
-            const match = line.match(/
-
-\[(\d{2}):(\d{2}(?:\.\d{2})?)\]
-
-(.*)/);
+            const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
             return match ? {
               time: parseInt(match[1], 10) * 60 + parseFloat(match[2]),
               text: match[3].trim()
