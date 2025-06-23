@@ -122,6 +122,32 @@
       return match ? match[1] : null;
     }
 
+    function loadYTPlayer(videoId) {
+      if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy();
+
+      ytPlayer = new YT.Player('player', {
+        height: '0',
+        width: '0',
+        videoId: videoId,
+        origin: window.location.origin, // ✅ this reduces postMessage warnings
+        events: {
+          onReady: () => {
+            isYouTubeReady = true;
+            document.getElementById("play").onclick = () => {
+              if (typeof ytPlayer.playVideo === "function") ytPlayer.playVideo();
+            };
+            document.getElementById("pause").onclick = () => {
+              if (typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
+            };
+          }
+        }
+      });
+    }
+
+    function onYouTubeIframeAPIReady() {
+      // This function must exist in global scope
+    }
+
     document.getElementById("loadVideo").addEventListener("click", () => {
       const link = document.getElementById("youtubeLink").value.trim();
       const videoId = extractVideoId(link);
@@ -129,25 +155,7 @@
         alert("Invalid YouTube link!");
         return;
       }
-
-      if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy();
-
-      ytPlayer = new YT.Player('player', {
-        height: '0',
-        width: '0',
-        videoId: videoId,
-        events: {
-          onReady: () => {
-            isYouTubeReady = true;
-            document.getElementById("play").onclick = () => {
-              if (ytPlayer && typeof ytPlayer.playVideo === "function") ytPlayer.playVideo();
-            };
-            document.getElementById("pause").onclick = () => {
-              if (ytPlayer && typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
-            };
-          }
-        }
-      });
+      loadYTPlayer(videoId);
     });
 
     document.getElementById("lrcFile").addEventListener("change", function () {
@@ -209,8 +217,12 @@
     }
 
     setInterval(() => {
-      if (isYouTubeReady && ytPlayer && typeof ytPlayer.getCurrentTime === "function" &&
-          ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+      if (
+        isYouTubeReady &&
+        ytPlayer &&
+        typeof ytPlayer.getCurrentTime === "function" &&
+        ytPlayer.getPlayerState() === YT.PlayerState.PLAYING
+      ) {
         const currentTime = ytPlayer.getCurrentTime();
         updateLyrics(currentTime);
         document.getElementById("seekBar").value = currentTime;
