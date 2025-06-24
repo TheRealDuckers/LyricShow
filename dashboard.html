@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LyricShow Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      padding: 1.5rem 1rem;
+      background: #1db954;
+      color: white;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .modes {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 2rem;
+    }
+
+    .mode-card {
+      background: #fff;
+      width: 200px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: fadeInSlideUp 0.8s forwards;
+    }
+
+    .mode-card:nth-child(2) { animation-delay: 0.1s; }
+    .mode-card:nth-child(3) { animation-delay: 0.2s; }
+    .mode-card:nth-child(4) { animation-delay: 0.3s; }
+
+    @keyframes fadeInSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mode-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .mode-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .mode-card:hover img {
+      transform: scale(1.03);
+    }
+
+    .mode-card h3 {
+      margin: 0.75rem 0 0.25rem;
+      font-size: 1.2rem;
+    }
+
+    .mode-card p {
+      font-size: 0.9rem;
+      color: #666;
+      padding: 0 0.5rem;
+    }
+
+    .mode-card .btn {
+      display: block;
+      margin: 0.75rem auto 1rem;
+      padding: 0.5rem 1rem;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+      width: 80%;
+      transform: scale(1);
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .mode-card .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .mode1 { border: 2px solid #2196F3; }
+    .mode1 .btn { background: #2196F3; }
+
+    .mode2 { border: 2px solid #8E24AA; }
+    .mode2 .btn { background: #8E24AA; }
+
+    .mode3 { border: 2px solid #FF0000; }
+    .mode3 .btn { background: #FF0000; }
+    
+    .mode4 { border: 2px solid black; }
+    .mode4 .btn { background: black; }
+
+    .mode5 { border: 2px solid #1DB954; }
+    .mode5 .btn { background: #1DB954; }
+    .mode5 .disabled { background: #ccc; color: #666; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to LyricShow <em>Pro</em></h1>
+  </header>
+
+  <main class="modes">
+    <div class="mode-card mode1">
+      <img src="{{ url_for('static', filename='img/freemode.png') }}" alt="Free Mode">
+      <h3>Original</h3>
+      <p>Sync a standalone .lrc file - the original LyricShow with spacebar playback</p>
+      <a href="{{ url_for('mode', mode_name='free') }}" class="btn">Launch</a>
+    </div>
+
+    <div class="mode-card mode2">
+      <img src="{{ url_for('static', filename='img/pro.png') }}" alt="Pro Mode">
+      <h3>MusicSync</h3>
+      <p>Sync a .lrc with a .mp3 with advanced song navigation</p>
+      <a href="{{ url_for('mode', mode_name='pro') }}" class="btn">Launch</a>
+    </div>
+
+    <div class="mode-card mode3">
+      <img src="{{ url_for('static', filename='img/youtube.png') }}" alt="YouTube Sync">
+      <h3>YouTube Sync</h3>
+      <p>BETA - youtube aduio import for music</p>
+      <a href="{{ url_for('mode', mode_name='youtube') }}" class="btn">Launch</a>
+    </div>
+    
+      <div class="mode-card mode4">
+      <img src="{{ url_for('static', filename='img/youtube.png') }}" alt="Minimal">
+      <h3>Minimal</h3>
+      <p>Minimal distractions, for use on projectors. Just shows the active lyric</p>
+      <a href="{{ url_for('mode', mode_name='minimal') }}" class="btn">Launch</a>
+    </div>
+
+    <div class="mode-card mode5">
+      <img src="{{ url_for('static', filename='img/spotify.png') }}" alt="Spotify Sync">
+      <h3>Spotify Sync</h3>
+      <p>Coming soon… - Use spotify as the music source</p>
+      <span class="btn disabled">Coming Soon</span>
+    </div>
+  </main>
+</body>
+</html>
