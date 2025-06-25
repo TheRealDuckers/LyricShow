@@ -125,35 +125,37 @@
 
   <main class="modes">
     <div class="mode-card mode1">
-      <img src="{{ url_for('static', filename='img/freemode.png') }}" alt="Free Mode">
+      
       <h3>Original</h3>
       <p>Sync a standalone .lrc file - the original LyricShow with spacebar playback</p>
-      <a href="{{ url_for('mode', mode_name='free') }}" class="btn">Launch</a>
+      <a href="index" class="btn">Launch</a>
     </div>
 
     <div class="mode-card mode2">
-      <img src="{{ url_for('static', filename='img/pro.png') }}" alt="Pro Mode">
+      
       <h3>MusicSync</h3>
       <p>Sync a .lrc with a .mp3 with advanced song navigation</p>
-      <a href="{{ url_for('mode', mode_name='pro') }}" class="btn">Launch</a>
+      <a href="/lyrics/pro/musicsync-BETA" class="btn">Launch</a>
     </div>
 
     <div class="mode-card mode3">
-      <img src="{{ url_for('static', filename='img/youtube.png') }}" alt="YouTube Sync">
+      
       <h3>YouTube Sync</h3>
       <p>BETA - youtube aduio import for music</p>
-      <a href="{{ url_for('mode', mode_name='youtube') }}" class="btn">Launch</a>
+      <a href="/lyrics/pro/youtubesync-BETA" class="btn">Launch</a>
     </div>
     
       <div class="mode-card mode4">
-      <img src="{{ url_for('static', filename='img/youtube.png') }}" alt="Minimal">
+     
       <h3>Minimal</h3>
       <p>Minimal distractions, for use on projectors. Just shows the active lyric</p>
-      <a href="{{ url_for('mode', mode_name='minimal') }}" class="btn">Launch</a>
+      <a href="/lyrics/pro/minimal-BETA" class="btn">Launch</a>
+      <a href="/lyrics/pro/options&colourshift=true" class="btn">Rehersal Mode</a>
+        
     </div>
 
     <div class="mode-card mode5">
-      <img src="{{ url_for('static', filename='img/spotify.png') }}" alt="Spotify Sync">
+   
       <h3>Spotify Sync</h3>
       <p>Coming soon… - Use spotify as the music source</p>
       <span class="btn disabled">Coming Soon</span>
