@@ -25,9 +25,40 @@
   <input type="range" id="seekBar" min="0" max="100" value="0" />
 
   <script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LyricShow Control Panel</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    input[type="file"], button, input[type="range"] {
+      display: block;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎛️ LyricShow Control</h1>
+
+  <label>🎵 Audio File:</label>
+  <input type="file" id="audioInput" accept="audio/*" />
+
+  <label>📝 Lyrics File (.lrc):</label>
+  <input type="file" id="lyricsInput" accept=".lrc" />
+
+  <button id="playBtn">▶️ Play</button>
+  <button id="pauseBtn">⏸️ Pause</button>
+  <input type="range" id="seekBar" min="0" max="100" value="0" />
+
+  <script>
     let audio = new Audio();
     let lyrics = [];
-    let currentLine = 0;
+    let currentLine = -1;
 
     const lyricsWindow = window.open('lyrics.html', 'LyricsWindow', 'width=800,height=600');
 
@@ -43,7 +74,19 @@
       if (file) {
         const reader = new FileReader();
         reader.onload = () => {
-          lyrics = reader.result.split('\n').map(line => line.trim()).filter(Boolean);
+          const lines = reader.result.split('\n');
+          lyrics = lines
+            .map(line => {
+              const match = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+              if (match) {
+                const minutes = parseInt(match[1]);
+                const seconds = parseFloat(match[2]);
+                const time = minutes * 60 + seconds;
+                return { time, text: match[3].trim() };
+              }
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.time - b.time);
         };
         reader.readAsText(file);
       }
@@ -61,12 +104,23 @@
       const percent = (audio.currentTime / audio.duration) * 100;
       document.getElementById('seekBar').value = percent;
 
-      const lineIndex = Math.floor(audio.currentTime / 2);
-      if (lineIndex !== currentLine && lyrics[lineIndex]) {
-        currentLine = lineIndex;
-        lyricsWindow.postMessage({ type: 'UPDATE_LYRIC', data: lyrics[lineIndex] }, '*');
+      if (lyrics.length === 0) return;
+
+      // Find the current lyric line
+      for (let i = lyrics.length - 1; i >= 0; i--) {
+        if (audio.currentTime >= lyrics[i].time) {
+          if (i !== currentLine) {
+            currentLine = i;
+            lyricsWindow.postMessage({ type: 'UPDATE_LYRIC', data: lyrics[i].text }, '*');
+          }
+          break;
+        }
       }
     });
+  </script>
+</body>
+</html>
+
   </script>
 </body>
 </html>
