@@ -18,39 +18,13 @@
 <body>
   <h1>🎛️ LyricShow Control</h1>
 
-  <input type="file" id="audioInput" accept="audio/*" />
-  <input type="file" id="lyricsInput" accept=".txt" />
-  <button id="playBtn">▶️ Play</button>
-  <button id="pauseBtn">⏸️ Pause</button>
-  <input type="range" id="seekBar" min="0" max="100" value="0" />
-
-  <script>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>LyricShow Control Panel</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background: #f9f9f9;
-    }
-    input[type="file"], button, input[type="range"] {
-      display: block;
-      margin: 1rem 0;
-    }
-  </style>
-</head>
-<body>
-  <h1>🎛️ LyricShow Control</h1>
-
   <label>🎵 Audio File:</label>
   <input type="file" id="audioInput" accept="audio/*" />
 
   <label>📝 Lyrics File (.lrc):</label>
   <input type="file" id="lyricsInput" accept=".lrc" />
 
+  <button id="launchBtn">🚀 Launch Lyrics Window</button>
   <button id="playBtn">▶️ Play</button>
   <button id="pauseBtn">⏸️ Pause</button>
   <input type="range" id="seekBar" min="0" max="100" value="0" />
@@ -59,8 +33,13 @@
     let audio = new Audio();
     let lyrics = [];
     let currentLine = -1;
+    let lyricsWindow = null;
 
-    const lyricsWindow = window.open('lyrics.html', 'LyricsWindow', 'width=800,height=600');
+    document.getElementById('launchBtn').addEventListener('click', () => {
+      if (!lyricsWindow || lyricsWindow.closed) {
+        lyricsWindow = window.open('lyrics.html', 'LyricsWindow', 'width=800,height=600');
+      }
+    });
 
     document.getElementById('audioInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -92,7 +71,14 @@
       }
     });
 
-    document.getElementById('playBtn').addEventListener('click', () => audio.play());
+    document.getElementById('playBtn').addEventListener('click', () => {
+      if (!lyricsWindow || lyricsWindow.closed) {
+        alert("Please launch the lyrics window first.");
+        return;
+      }
+      audio.play();
+    });
+
     document.getElementById('pauseBtn').addEventListener('click', () => audio.pause());
 
     document.getElementById('seekBar').addEventListener('input', (e) => {
@@ -104,9 +90,8 @@
       const percent = (audio.currentTime / audio.duration) * 100;
       document.getElementById('seekBar').value = percent;
 
-      if (lyrics.length === 0) return;
+      if (lyrics.length === 0 || !lyricsWindow) return;
 
-      // Find the current lyric line
       for (let i = lyrics.length - 1; i >= 0; i--) {
         if (audio.currentTime >= lyrics[i].time) {
           if (i !== currentLine) {
@@ -117,10 +102,6 @@
         }
       }
     });
-  </script>
-</body>
-</html>
-
   </script>
 </body>
 </html>
