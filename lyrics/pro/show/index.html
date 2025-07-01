@@ -1,1 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LyricShow</title>
+  <style>
+   
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: black;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      position: relative;
+      color: white;
+    }
+    /* Outer lyrics container with rounded corners/shadow */
+    .lyrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 99%;
+      height: 80vh;
+      overflow: hidden;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    /* Inner container that scrolls */
+    #lyricsInner {
+      position: relative;
+      transition: transform 0.4s ease-in-out;
+    }
+    /* Individual lyric styling */
+    .lyric {
+      font-size: 20px;
+      color: gray;
+      padding: 10px 0;
+      transition: all 0.4s ease-in-out;
+      text-align: center;
+      cursor: pointer;
+    }
+    .lyric.active {
+      font-size: 36px;
+      font-weight: bold;
+      color: black;
+    }
+    /* Floating control bar container */
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-radius: 10px 10px 0 0;
+      box-shadow: 0 -4px 6px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Toggle button always visible */
+    #toggleControls {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 10px;
+      cursor: pointer;
+      transition: transform 3s ease-in-out;
+      outline: none;
+    }
+    /* Control content that can be hidden */
+    #controlsContent {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      transition: max-height 4s ease-in-out, opacity 4s ease-in-out;
+    }
+    #controlsContent.hidden {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      padding: 0;
+    }
+    button {
+      background: white;
+      border: none;
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    input[type="range"] {
+      width: 50%;
+      border-radius: 5px;
+    }
+    /* Loader Styles */
+    .loaders {
+      margin: 10px;
+      
+    }
+    .loaders input {
+      background-color: black; 
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+    }
+    /* Timer Display */
+    .timer-display {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
 
+  <div class="loaders">
+      <label for="lrcFile">Load LRC File:</label>
+      <input type="file" id="lrcFile" accept=".lrc" />
+    </div>
+  </div>
+
+
+  <div class="lyrics-container" id="lyrics">
+    <div id="lyricsInner"></div>
+  </div>
+
+  <!-- Floating Control Bar -->
+
+  <div class="controls" id="controls">
+<button id="toggleControls">🔽</button>
+    <div id="controlsContent">
+      <button id="play">▶️ Play</button>
+      <button id="pause">⏸️ Pause</button>
+      <input type="range" id="seekBar" value="0" step="0.1">
+        <div class="timer-display" id="timerDisplay">0:00</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const playButton = document.getElementById("play");
+      const pauseButton = document.getElementById("pause");
+      const seekBar = document.getElementById("seekBar");
+      const lyricsContainer = document.getElementById("lyrics");
+      const lyricsInner = document.getElementById("lyricsInner");
+      const lrcInput = document.getElementById("lrcFile");
+      const timerDisplay = document.getElementById("timerDisplay");
+      const toggleControls = document.getElementById("toggleControls");
+      const controlsContent = document.getElementById("controlsContent");
+
+      let lyricsData = [];
+      let simulatedTime = 0; // in seconds
+      let timerInterval = null;
+      let maxTime = 0;
+
+      // Sample default lyrics if no LRC file is loaded.
+      const defaultLyrics = [
+        { time: 0, text: "Welcome to LyricShow" },
+        { time: 2, text: "To start, upload a .lrc (lyric) file at the top of the page" },
+        { time: 8, text: "Created by Duckers" }
+      ];
+
+      // Use default lyrics if no LRC file is loaded.
+      function setDefaultLyrics() {
+        if (lyricsData.length === 0) {
+          lyricsData = defaultLyrics;
+          displayLyrics();
+          maxTime = lyricsData[lyricsData.length - 1].time + 5; // extra seconds for final display
+          seekBar.max = maxTime;
+          console.log("Default lyrics loaded:", lyricsData);
+        }
+      }
+
+      // Load and parse LRC file.
+      lrcInput.addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            const content = e.target.result;
+            console.log("LRC file content:\n", content);
+            const lines = content.split("\n").filter(line => line.trim().length > 0);
+            lyricsData = lines.map(line => {
+              // Expecting format like: [00:05.00]This is the lyric
+              const match = line.match(/\[(\d{2}):(\d{2}(?:\.\d{2})?)\](.*)/);
+              if (match) {
+                return {
+                  time: parseInt(match[1], 10) * 60 + parseFloat(match[2]),
+                  text: (match[3] || "").trim()
+                };
+              }
+              return null;
+            }).filter(item => item !== null);
+            console.log("Parsed lyrics:", lyricsData);
+            displayLyrics();
+            if (lyricsData.length) {
+              maxTime = lyricsData[lyricsData.length - 1].time + 5;
+              seekBar.max = maxTime;
+            }
+          };
+          reader.readAsText(file);
+        }
+      });
+
+      // Display the lyrics in the inner container.
+      function displayLyrics() {
+        lyricsInner.innerHTML = "";
+        lyricsData.forEach((lyric, index) => {
+          const div = document.createElement("div");
+          div.classList.add("lyric");
+          div.textContent = lyric.text;
+          // When the lyric is clicked, jump to that time.
+          div.addEventListener("click", () => {
+            simulatedTime = lyric.time;
+            updateTimerDisplay(simulatedTime);
+            seekBar.value = simulatedTime;
+            updateLyrics();
+            console.log(`Jumped to lyric index ${index} at time ${lyric.time}`);
+          });
+          lyricsInner.appendChild(div);
+        });
+        console.log("displayLyrics executed; lyric elements added.");
+      }
+
+      // Update timer display (format: mm:ss).
+      function updateTimerDisplay(time) {
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        timerDisplay.textContent = `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+      }
+
+      // Update the active lyric and scroll the inner container.
+      function updateLyrics() {
+        const lyricDivs = Array.from(lyricsInner.querySelectorAll(".lyric"));
+        let activeIndex = -1;
+        // Determine which lyric should be active.
+        for (let i = 0; i < lyricsData.length; i++) {
+          const currentLyric = lyricsData[i];
+          const nextLyric = lyricsData[i + 1];
+          if (simulatedTime >= currentLyric.time &&
+              (!nextLyric || simulatedTime < nextLyric.time)) {
+            activeIndex = i;
+            break;
+          }
+        }
+        // Update active styling.
+        lyricDivs.forEach((div, index) => {
+          if (index === activeIndex) {
+            div.classList.add("active");
+          } else {
+            div.classList.remove("active");
+          }
+        });
+        // Scroll so that the active lyric is centered.
+        if (activeIndex !== -1 && lyricDivs[activeIndex]) {
+          const activeDiv = lyricDivs[activeIndex];
+          const containerHeight = lyricsContainer.clientHeight;
+          const activeCenter = activeDiv.offsetTop + activeDiv.offsetHeight / 2;
+          const translateY = containerHeight / 2 - activeCenter;
+          lyricsInner.style.transform = `translateY(${translateY}px)`;
+          console.log(`Active lyric index ${activeIndex} centered.`);
+        }
+      }
+
+      // Simulated timer tick: update simulatedTime.
+      function tick() {
+        simulatedTime += 0.1;
+        if (simulatedTime > maxTime) {
+          simulatedTime = maxTime;
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        updateTimerDisplay(simulatedTime);
+        seekBar.value = simulatedTime;
+        updateLyrics();
+      }
+
+      // Play button: start the timer.
+      playButton.addEventListener("click", () => {
+        if (!timerInterval) {
+          setDefaultLyrics();
+          timerInterval = setInterval(tick, 100);
+          console.log("Timer started.");
+        }
+      });
+
+      // Pause button: stop the timer.
+      pauseButton.addEventListener("click", () => {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          console.log("Timer paused.");
+        }
+      });
+
+      // Seek bar: allow manual changes in simulatedTime.
+      seekBar.addEventListener("input", () => {
+        simulatedTime = parseFloat(seekBar.value);
+        updateTimerDisplay(simulatedTime);
+        updateLyrics();
+      });
+      
+      // Space bar: toggle play/pause when pressed.
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          // Prevent default scrolling behavior.
+          e.preventDefault();
+          if (timerInterval) {
+            // Timer is running – pause.
+            clearInterval(timerInterval);
+            timerInterval = null;
+            console.log("Timer paused via Spacebar.");
+          } else {
+            // Timer is paused – start.
+            timerInterval = setInterval(tick, 100);
+            console.log("Timer started via Spacebar.");
+          }
+        }
+      });
+      
+      // Toggle button: hide or show control content.
+      let controlsHidden = false;
+      toggleControls.addEventListener("click", () => {
+        controlsHidden = !controlsHidden;
+        if (controlsHidden) {
+          controlsContent.classList.add("hidden");
+          // Rotate the toggle arrow upward.
+          toggleControls.style.transform = "rotate(180deg)";
+        } else {
+          controlsContent.classList.remove("hidden");
+          toggleControls.style.transform = "rotate(0deg)";
+        }
+      });
+    });
+document.addEventListener("DOMContentLoaded", () => {
+  // Get the URL parameter value for "loadwith"
+  const params = new URLSearchParams(window.location.search);
+  const lrcPath = params.get("loadwith");
+
+  if (lrcPath) {
+    // Load the LRC file from the specified path.
+    fetch(lrcPath)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to load LRC file from ${lrcPath}`);
+        }
+        return response.text();
+      })
+      .then(lrcContent => {
+        // Now you have the LRC file content as a string.
+        console.log("Loaded LRC content:", lrcContent);
+        // You can parse and apply it to your lyrics sync functionality.
+      })
+      .catch(error => console.error("Error loading LRC file:", error));
+  }
+});
+
+displayLyrics()
+element.requestFullscreen()
+  </script>
+  
+<script>
+  window.addEventListener('message', (event) => {
+    const { type, data } = event.data;
+    if (type === 'UPDATE_LYRIC') {
+      document.getElementById('lyrics').textContent = data;
+    }
+  });
+</script>
+
+</body>
+</html>
