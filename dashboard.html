@@ -189,7 +189,7 @@
   const token = localStorage.getItem('github_token');
 
   if (!token) {
-    window.location.href = 'login';
+    window.location.href = 'dashboard';
   } else {
     // Logged in — continue to app
     console.log('User is authenticated with token:', token);
