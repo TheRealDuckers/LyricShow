@@ -175,7 +175,7 @@
       name.replace(/\b\w/g, (char) => char.toUpperCase());
 
     const name = rawName ? decodeURIComponent(rawName) : null;
-    const greeting = name ? `Hello, ${formatName(name)}!` : 'Welcome to LyricShow pro, ';
+    const greeting = name ? `Hello, ${formatName(name)}!, welcome to LyricShow Pro!` : 'Welcome to LyricShow pro!';
 
     document.getElementById('greeting').textContent = greeting;
   </script>
