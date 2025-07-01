@@ -38,6 +38,8 @@
     document.getElementById('launchBtn').addEventListener('click', () => {
       if (!lyricsWindow || lyricsWindow.closed) {
         lyricsWindow = window.open('lyrics.html', 'LyricsWindow', 'width=800,height=600');
+      } else {
+        lyricsWindow.focus();
       }
     });
 
@@ -87,13 +89,17 @@
     document.getElementById('pauseBtn').addEventListener('click', () => audio.pause());
 
     document.getElementById('seekBar').addEventListener('input', (e) => {
-      const percent = e.target.value;
-      audio.currentTime = (percent / 100) * audio.duration;
+      if (!isNaN(audio.duration)) {
+        const percent = e.target.value;
+        audio.currentTime = (percent / 100) * audio.duration;
+      }
     });
 
     audio.addEventListener('timeupdate', () => {
-      const percent = (audio.currentTime / audio.duration) * 100;
-      document.getElementById('seekBar').value = percent;
+      if (!isNaN(audio.duration)) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        document.getElementById('seekBar').value = percent;
+      }
 
       if (lyrics.length === 0 || !lyricsWindow) return;
 
