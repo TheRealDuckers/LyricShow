@@ -56,7 +56,11 @@
           const lines = reader.result.split('\n');
           lyrics = lines
             .map(line => {
-              const match = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+              const match = line.match(/
+
+\[(\d+):(\d+\.\d+)\]
+
+(.*)/);
               if (match) {
                 const minutes = parseInt(match[1]);
                 const seconds = parseFloat(match[2]);
@@ -66,6 +70,11 @@
             })
             .filter(Boolean)
             .sort((a, b) => a.time - b.time);
+
+          if (lyricsWindow && !lyricsWindow.closed) {
+            const textOnly = lyrics.map(l => l.text);
+            lyricsWindow.postMessage({ type: 'SET_LYRICS', data: textOnly }, '*');
+          }
         };
         reader.readAsText(file);
       }
@@ -96,7 +105,7 @@
         if (audio.currentTime >= lyrics[i].time) {
           if (i !== currentLine) {
             currentLine = i;
-            lyricsWindow.postMessage({ type: 'UPDATE_LYRIC', data: lyrics[i].text }, '*');
+            lyricsWindow.postMessage({ type: 'UPDATE_ACTIVE_INDEX', data: i }, '*');
           }
           break;
         }
