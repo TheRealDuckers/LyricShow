@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lyrics Display | LyricShow</title>
+  <title>Lyrics Display</title>
   <style>
     body {
       margin: 0;
@@ -58,7 +58,9 @@
           line.classList.toggle('active', i === data);
         });
         if (lines[data]) {
-          lines[data].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            lines[data].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 10);
         }
       }
     });
