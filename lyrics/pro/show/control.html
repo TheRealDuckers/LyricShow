@@ -34,9 +34,21 @@
     let lyrics = [];
     let currentLine = -1;
     let lyricsWindow = null;
+    let lyricsReady = false;
+
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'READY') {
+        lyricsReady = true;
+        if (lyrics.length > 0) {
+          const textOnly = lyrics.map(l => l.text);
+          lyricsWindow.postMessage({ type: 'SET_LYRICS', data: textOnly }, '*');
+        }
+      }
+    });
 
     document.getElementById('launchBtn').addEventListener('click', () => {
       if (!lyricsWindow || lyricsWindow.closed) {
+        lyricsReady = false;
         lyricsWindow = window.open('lyrics.html', 'LyricsWindow', 'width=800,height=600');
       } else {
         lyricsWindow.focus();
@@ -69,7 +81,7 @@
             .filter(Boolean)
             .sort((a, b) => a.time - b.time);
 
-          if (lyricsWindow && !lyricsWindow.closed) {
+          if (lyricsReady && lyricsWindow && !lyricsWindow.closed) {
             const textOnly = lyrics.map(l => l.text);
             lyricsWindow.postMessage({ type: 'SET_LYRICS', data: textOnly }, '*');
           }
