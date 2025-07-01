@@ -185,7 +185,7 @@
   </script>
  <script>
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const code = params.get('code');
 
     if (token) {
       // Save token to localStorage
@@ -202,8 +202,6 @@
   const token = localStorage.getItem('github_token');
 
   if (!token) {
-    
-
     window.location.href = 'login';
   } else {
     // Logged in — continue to app
