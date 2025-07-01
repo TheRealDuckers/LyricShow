@@ -120,7 +120,7 @@
 </head>
 <body>
   <header>
-    <h1>Welcome to LyricShow <em>Pro</em></h1>
+    <h1>Welcome to LyricShow <em>Pro,</em><h1 id="greeting">Loading...</h1></h1>
   </header>
 
   <main class="modes">
@@ -164,4 +164,25 @@
     </div>
   </main>
 </body>
+
+<script>
+    const pathParts = window.location.pathname.split('/');
+    const usernameIndex = pathParts.indexOf('dashboard') + 1;
+    const rawUsername = pathParts[usernameIndex];
+
+    // Decode URL-encoded characters (like %20 for space)
+    const username = rawUsername ? decodeURIComponent(rawUsername) : null;
+
+    // Capitalize first letter of each word (optional)
+    const formatName = (name) =>
+      name.replace(/\b\w/g, (char) => char.toUpperCase());
+
+    const greeting = username
+      ? `Hello, ${formatName(username)}!`
+      : 'Hello, Guest!';
+
+    document.getElementById('greeting').textContent = greeting;
+  </script>
+</body>
+</html>
 </html>
