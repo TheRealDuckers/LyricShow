@@ -183,6 +183,34 @@
 
     document.getElementById('greeting').textContent = greeting;
   </script>
+ <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    if (token) {
+      // Save token to localStorage
+      localStorage.setItem('github_token', code);
+
+      // Redirect to your app's main page
+      window.location.href = 'dashboard';
+    } else {
+      document.body.innerHTML = '<h1>❌ No token found in URL.</h1>';
+    }
+  </script>
+
+<script>
+  const token = localStorage.getItem('github_token');
+
+  if (!token) {
+    
+
+    window.location.href = 'login';
+  } else {
+    // Logged in — continue to app
+    console.log('User is authenticated with token:', token);
+  }
+</script>
+
 </body>
 </html>
 </html>
