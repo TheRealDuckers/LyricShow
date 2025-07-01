@@ -120,7 +120,7 @@
 </head>
 <body>
   <header>
-    <h1>Welcome to LyricShow <em>Pro,</em><h1 id="greeting">Loading...</h1></h1>
+   <h1 id="greeting">Loading...</h1></h1>
   </header>
 
   <main class="modes">
@@ -161,26 +161,21 @@
       <span class="btn disabled">Coming Soon</span>
 
       
-    </div>
-    <p>Brought to you by the fine folks at</p><a href="github.com/DuckersWeb" target="_blank">DuckersWeb</a>
+    </div> 
   </main>
 </body>
 
-<script>
-    const pathParts = window.location.pathname.split('/');
-    const usernameIndex = pathParts.indexOf('dashboard') + 1;
-    const rawUsername = pathParts[usernameIndex];
+  <script>
+    // Get query parameters from the URL
+    const params = new URLSearchParams(window.location.search);
+    const rawName = params.get('name');
 
-    // Decode URL-encoded characters (like %20 for space)
-    const username = rawUsername ? decodeURIComponent(rawUsername) : null;
-
-    // Capitalize first letter of each word (optional)
+    // Decode and format the name
     const formatName = (name) =>
       name.replace(/\b\w/g, (char) => char.toUpperCase());
 
-    const greeting = username
-      ? `Hello, ${formatName(username)}!`
-      : 'Hello, Guest!';
+    const name = rawName ? decodeURIComponent(rawName) : null;
+    const greeting = name ? `Hello, ${formatName(name)}!` : 'Welcome to LyricShow pro, ';
 
     document.getElementById('greeting').textContent = greeting;
   </script>
