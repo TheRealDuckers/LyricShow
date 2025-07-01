@@ -1,0 +1,14 @@
+ <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    if (token) {
+      // Save token to localStorage
+      localStorage.setItem('github_token', code);
+
+      // Redirect to your app's main page
+      window.location.href = 'dashboard';
+    } else {
+      document.body.innerHTML = '<h1>❌ No token found in URL.</h1>';
+    }
+  </script>
