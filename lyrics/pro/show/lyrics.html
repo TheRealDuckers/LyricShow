@@ -134,7 +134,19 @@
 
   <div class="lyrics-container" id="lyrics">
     <div id="lyricsInner"></div>
+    <div id="lyrics">🎶 Waiting for lyrics...</div>
+
   </div>
+  
+<script>
+  window.addEventListener('message', (event) => {
+    const { type, data } = event.data;
+    if (type === 'UPDATE_LYRIC') {
+      document.getElementById('lyrics').textContent = data;
+    }
+  });
+</script>
+
 
   <!-- Floating Control Bar -->
 
