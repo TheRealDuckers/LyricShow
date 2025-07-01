@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LyricShow Control Panel</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    input[type="file"], button, input[type="range"] {
+      display: block;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎛️ LyricShow Control</h1>
+
+  <input type="file" id="audioInput" accept="audio/*" />
+  <input type="file" id="lyricsInput" accept=".txt" />
+  <button id="playBtn">▶️ Play</button>
+  <button id="pauseBtn">⏸️ Pause</button>
+  <input type="range" id="seekBar" min="0" max="100" value="0" />
+
+  <script>
+    let audio = new Audio();
+    let lyrics = [];
+    let currentLine = 0;
+
+    const lyricsWindow = window.open('lyrics.html', 'LyricsWindow', 'width=800,height=600');
+
+    document.getElementById('audioInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        audio.src = URL.createObjectURL(file);
+      }
+    });
+
+    document.getElementById('lyricsInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          lyrics = reader.result.split('\n').map(line => line.trim()).filter(Boolean);
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    document.getElementById('playBtn').addEventListener('click', () => audio.play());
+    document.getElementById('pauseBtn').addEventListener('click', () => audio.pause());
+
+    document.getElementById('seekBar').addEventListener('input', (e) => {
+      const percent = e.target.value;
+      audio.currentTime = (percent / 100) * audio.duration;
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      const percent = (audio.currentTime / audio.duration) * 100;
+      document.getElementById('seekBar').value = percent;
+
+      const lineIndex = Math.floor(audio.currentTime / 2);
+      if (lineIndex !== currentLine && lyrics[lineIndex]) {
+        currentLine = lineIndex;
+        lyricsWindow.postMessage({ type: 'UPDATE_LYRIC', data: lyrics[lineIndex] }, '*');
+      }
+    });
+  </script>
+</body>
+</html>
