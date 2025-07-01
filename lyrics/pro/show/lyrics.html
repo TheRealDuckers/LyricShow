@@ -38,6 +38,9 @@
   <script>
     let lines = [];
 
+    // Notify parent window that we're ready
+    window.opener?.postMessage({ type: 'READY' }, '*');
+
     window.addEventListener('message', (event) => {
       const { type, data } = event.data;
 
